@@ -209,16 +209,14 @@ void parseSemanticError(const char *format, ...) {
 	va_start(arg, format);
 	i = vsprintf(buf, format, arg);
 	if (currentInputStream->lineno == -1)
-		parseOutput("[Error] <none>:-1: Error during code generation: %s\n", buf);
+		parseOutput("[Error] <Semantic> <none>:-1: Error during code generation: %s\n", buf);
 	else
-		parseOutput("[Error] <%s>:%d:%d: %s\n", lexGetFilename(currentInputStream), lexGetLineno(currentInputStream), lexGetColumn(currentInputStream), buf);
+		parseOutput("[Error] <Semantic> <%s>:%d:%d: %s\n", lexGetFilename(currentInputStream), lexGetLineno(currentInputStream), lexGetColumn(currentInputStream), buf);
 	va_end(arg);
 
-#ifndef BUILDING_DLL
 	compilerErrorTotal++;
 
 	longjmp(currentProgram->env, 1);
-#endif
 }
 
 static void freeVariableList(VariableList *v) {
