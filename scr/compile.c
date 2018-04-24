@@ -38,7 +38,7 @@ static void PrintLogo() {
 }
 
 extern int warn_level; //the mcpp warning level
-extern int mcpp_lib_main(FILE *fin, FILE *fout, const char* in_file, const char* dir);
+extern int mcpp_lib_main(FILE *fin, FILE *fout, const char* in_file, const char* dir, const char* def);
 //extern void set_a_dir(const char * dirname);
 
 #ifndef BUILDING_DLL
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 						newfile=fopen(tmpbuf, "w+DT");
 //#endif
 					}
-					if(mcpp_lib_main(foo.file, newfile, buf.name, buf.name)) {
+					if(mcpp_lib_main(foo.file, newfile, buf.name, buf.name, "")) {
 						parseOutput("*** An error occured during preprocessing of %s ***\n", buf.name);
 						return 1;
 					}
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 
 static int inited=0;
 
-int _stdcall parse_main(const char *filePath, const char* origPath, const char* dir) {
+int _stdcall parse_main(const char *filePath, const char* origPath, const char* dir, const char* def) {
 	InputStream foo;
 	char tmpbuf[260];
 	//char cwd[1024];
@@ -252,7 +252,7 @@ int _stdcall parse_main(const char *filePath, const char* origPath, const char* 
 	//chdir(dir);
 	compilerErrorTotal = 0;
 	preprocess_fullpath = 1;
-	if (mcpp_lib_main(foo.file, newfile, origPath, dir)) {
+	if (mcpp_lib_main(foo.file, newfile, origPath, dir, def)) {
 		fclose(foo.file);
 		fclose(newfile);
 		if (parseroutput)

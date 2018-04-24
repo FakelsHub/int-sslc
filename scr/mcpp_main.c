@@ -274,7 +274,8 @@ int     mcpp_lib_main
     FILE *fin,
 	FILE *fout,
 	const char* in_file,
-	const char* dir
+	const char* dir,
+	const char* def
 )
 {
     const char *  stdin_name = "<stdin>";
@@ -303,7 +304,7 @@ int     mcpp_lib_main
     inc_dirp = &null;   /* Initialize to current (null) directory   */
     cur_fname = cur_fullname = "(predefined)";  /* For predefined macros    */
     init_defines();                         /* Predefine macros     */
-    do_options(dir);   /* Command line options */
+    do_options(dir, def);   /* Command line options */
 
     init_sys_macro();       /* Initialize system-specific macros    */
     add_file( fp_in, NULL, in_file, in_file, FALSE);

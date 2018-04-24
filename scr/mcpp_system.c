@@ -221,7 +221,8 @@ void    init_system( void)
 #define OPTLISTLEN  80
 
 void    do_options(
-	const char* dir
+	const char* dir,
+	const char* def
 )
 /*
  * Process command line arguments, called only at MCPP startup.
@@ -247,6 +248,9 @@ void    do_options(
 
 	if (dir)
 		set_a_dir(dir);
+
+	if (strlen(def) > 0)  /* define macros */
+		def_list[def_cnt++] = def;
 
     /* Check consistency of specified options, set some variables   */
     chk_opts( sflag, trad);
