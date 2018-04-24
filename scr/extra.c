@@ -89,7 +89,7 @@ void parseExtraExpression(Procedure *p, NodeList* nodes, int token)
 		PARSEEXP(DO_CHECK, 3);
 		PARSEEXP(IS_SUCCESS, 1);
 		PARSEEXP(IS_CRITICAL, 1);
-		PARSEEXP(HOW_MUCH, 0);
+		PARSEEXP(HOW_MUCH, 1);
 		PARSEEXP(REACTION_INFLUENCE, 3);
 		PARSEEXP(RANDOM, 2);
 		PARSEEXP(ROLL_DICE, 2);
@@ -999,7 +999,7 @@ int writeExtraExpression(NodeList *n, int i, FILE *f) {
 		EXP(DO_CHECK, 3);						// 422
 		EXP(IS_SUCCESS, 1);						// 423
 		EXP(IS_CRITICAL, 1);					// 424
-		EXP(HOW_MUCH, 0);						// 425
+		EXP(HOW_MUCH, 1);						// 425
 		EXP(REACTION_INFLUENCE, 3);				// 427
 		EXP(RANDOM, 2);							// 428
 		EXP(ROLL_DICE, 2);						// 429
