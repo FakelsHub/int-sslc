@@ -141,13 +141,7 @@ extern void parseWarningAtNode(const Node* node, const char *format, ...);
 extern void parseWarning(const char *format, ...);
 extern void parseErrorAtNode(const Node* node, const char *format, ...);
 extern void parseError(const char *format, ...);
-
-#ifdef BUILDING_DLL
-// this can be ignored if you only want the syntax tree
-#define parseSemanticError(format, ...) 1
-#else
-#define parseSemanticError(format, ...) parseError (format, __VA_ARGS__)
-#endif
+extern void parseSemanticError(const char *format, ...);
 
 extern void CloneLexData(LexData *dest, LexData *source);
 extern void GenTmpVar(Procedure *p, LexData* lex);

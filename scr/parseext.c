@@ -355,11 +355,10 @@ void parseSwitch(Procedure *p, NodeList *n) {
 			emitOp(p, n, T_BEGIN);
 			emitOp(p, n, T_START_STATEMENT);
 		}
-		if(expectToken(T_CONSTANT)==-1) parseError("Expected constant");
 		emitOp(p, n, T_IF);
 		emitOp(p, n, T_START_EXPRESSION);
 		emitNode(p, n, &symbol);
-		emitNode(p, n, &lexData);
+		parseExpression(p, n);
 		emitOp(p, n, T_EQUAL);
 		emitOp(p, n, T_END_EXPRESSION);
 		emitOp(p, n, T_THEN);

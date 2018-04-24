@@ -16,7 +16,7 @@
 #include "lex.h"
 #include "parseext.h"
 
-int	compilerErrorTotal;
+int compilerErrorTotal;
 extern int backwardcompat;
 extern int warnings;
 extern int optimize;
@@ -70,7 +70,7 @@ int outputStr(const char *s) {
 }
 int vparseOutput(const char *format, va_list args) {
 	int v = 0;
-	if (parseroutput) 
+	if (parseroutput)
 		vfprintf(parseroutput, format, args);
 	return v;
 }
@@ -78,7 +78,7 @@ int parseOutput(const char *format, ...) {
 	int i=0;
 	if (parseroutput) {
 		va_list arg;
-		
+
 		va_start(arg, format);
 		i = vfprintf(parseroutput, format, arg);
 		va_end(arg);
@@ -134,6 +134,24 @@ void parseWarningAtNode(const Node* node, const char *format, ...) {
 	else parseOutput("[Warning] <none>:%d: %s\n", -1, buf);
 	va_end(arg);
 }
+
+/*
+void parseOutputWithOrigin(const char* type, int lineNo, int column, const char *format, ...) {
+	char buf[256];
+	int i;
+	va_list arg;
+
+	va_start(arg, format);
+	i = vsprintf(buf, format, arg);
+	if (lineNo == -1) {
+		parseOutput("[%s] <none>:-1: Warning during code generation: %s\n", type, buf);
+	} else {
+		parseOutput("[%s] <%s>:%d:%d: %s\n", type, lexGetFilename(currentInputStream), lineNo, column, buf);
+	}
+	va_end(arg);
+}
+*/
+
 void parseWarning(const char *format, ...) {
 	char buf[256];
 	int i;
@@ -181,6 +199,26 @@ void parseError(const char *format, ...) {
 	compilerErrorTotal++;
 
 	longjmp(currentProgram->env, 1);
+}
+
+void parseSemanticError(const char *format, ...) {
+	char buf[256];
+	int i;
+	va_list arg;
+
+	va_start(arg, format);
+	i = vsprintf(buf, format, arg);
+	if (currentInputStream->lineno == -1)
+		parseOutput("[Error] <none>:-1: Error during code generation: %s\n", buf);
+	else
+		parseOutput("[Error] <%s>:%d:%d: %s\n", lexGetFilename(currentInputStream), lexGetLineno(currentInputStream), lexGetColumn(currentInputStream), buf);
+	va_end(arg);
+
+#ifndef BUILDING_DLL
+	compilerErrorTotal++;
+
+	longjmp(currentProgram->env, 1);
+#endif
 }
 
 static void freeVariableList(VariableList *v) {
@@ -367,6 +405,58 @@ static void assignValue(Value *v, LexData *what) {
 	}
 }
 
+static void constantExpression(LexData* result) {
+	int parens = 0;
+	int unaryOperator = 0;
+	while (expectToken('(') != -1) parens++;
+	if (expectToken('-') != -1 || expectToken(T_NOT) != -1 || expectToken(T_BWNOT) != -1) {
+		unaryOperator = lexData.token;
+	}
+	if (expectToken(T_CONSTANT) == -1) {
+		parseError("Constant expected.");
+	}
+	switch (unaryOperator) {
+	case '-':
+		switch(lexData.type) {
+		case T_INT:
+			lexData.intData = -lexData.intData;
+			break;
+		case T_FLOAT:
+			lexData.floatData = -lexData.floatData;
+			break;
+		}
+		break;
+	case T_NOT:
+		switch(lexData.type) {
+		case T_INT:
+			lexData.intData = !lexData.intData;
+			break;
+		case T_FLOAT:
+			lexData.type = T_INT;
+			lexData.intData = !(int)lexData.floatData;
+			break;
+		}
+		break;
+	case T_BWNOT:
+		switch(lexData.type) {
+		case T_INT:
+			lexData.intData = ~lexData.intData;
+			break;
+		case T_FLOAT:
+			lexData.type = T_INT;
+			lexData.intData = ~(int)lexData.floatData;
+			break;
+		}
+		break;
+	}
+	*result = lexData;
+	for (; parens > 0; --parens) {
+		if (expectToken(')') == -1) {
+			parseError("')' expected.");
+		}
+	}
+}
+
 static void assignVariable(VariableList *v, int which, LexData *what) {
 	assignValue(&v->variables[which].value, what);
 	v->variables[which].initialized = 1;
@@ -466,7 +556,7 @@ static int defineVariable(VariableList *v, char **namelist, int type, ArrayVarLi
 		if (findName(*namelist, lexData.stringData) != -1)
 			parseSemanticError("Redefinition of %s.", lexData.stringData);
 
-		
+
 		i = addVariable(v, namelist, type, lexData.stringData);
 
 		if (i == -1)
@@ -492,24 +582,16 @@ static int defineVariable(VariableList *v, char **namelist, int type, ArrayVarLi
 			strcpy(buf, symbol.stringData);
 			symbol.stringData = buf;
 			if (expectToken(T_CONSTANT) == -1) {
-				if (!allowExpr && expectToken('-') != -1 && expectToken(T_CONSTANT) != -1) {
-					switch(lexData.type) {
-					case T_INT:
-						lexData.intData = -lexData.intData;
-						break;
-					case T_FLOAT:
-						lexData.floatData = -lexData.floatData;
-						break;
-					}
-					assignVariable(v, i, &lexData);
-				} else {
-					if (!allowExpr)
-						parseSemanticError("Initialization of \"%s\" with a non-constant.", symbol.stringData);
+				if (allowExpr) {
 					emitOp(currentProcedure, &currentProcedure->nodes, T_START_STATEMENT);
 					emitNode(currentProcedure, &currentProcedure->nodes, &symbol);
 					emitOp(currentProcedure, &currentProcedure->nodes, T_ASSIGN);
 					parseExpression(currentProcedure, &currentProcedure->nodes);
 					emitOp(currentProcedure, &currentProcedure->nodes, T_END_STATEMENT);
+				} else {
+					LexData assignConstant;
+					constantExpression(&assignConstant);
+					assignVariable(v, i, &assignConstant);
 				}
 			} else
 				assignVariable(v, i, &lexData);
@@ -577,7 +659,7 @@ static Procedure *addProcedure(ProcedureList *procs, char **namelist, char *name
 
 	procs->procedures[i].condition.numNodes = 0;
 	procs->procedures[i].condition.nodes = 0;
-	
+
 	procs->procedures[i].numRefs = 0;
 	procs->procedures[i].references = 0;
 	procs->procedures[i].declared=-1;
@@ -672,10 +754,9 @@ static int externVariable(VariableList *v, char **namelist, int type, int flag) 
 
 	if (expectToken(T_ASSIGN) != -1) {
 		if (flag) {
-			if (expectToken(T_CONSTANT) == -1)
-				parseSemanticError("Initialization of %s with non-constant.", lexData.stringData);
-			else
-				assignVariable(v, i, &lexData);
+			LexData assignConstant;
+			constantExpression(&assignConstant);
+			assignVariable(v, i, &assignConstant);
 		}
 		else parseError("Can't assign in initialization of imported variables.");
 	}
@@ -819,7 +900,7 @@ void emitNode(Procedure *p, NodeList *n, LexData *data) {
 	} else if(!(n->numNodes%8)) {
 		n->nodes = (Node*)realloc(n->nodes, sizeof(Node) * (n->numNodes+8));
 	}
-	
+
 	i = n->numNodes++;
 
 	n->nodes[i].token = data->token;
@@ -933,7 +1014,7 @@ static void factor(Procedure *p, NodeList *nodes) {
 			else {
 				if (expectToken('[') != -1 || expectToken('.') != -1) {
 					parseArrayDereference(p, nodes, d, 0);
-				} 
+				}
 				else {
 					emitNode(p, nodes, &d);
 				}
@@ -946,7 +1027,7 @@ static void factor(Procedure *p, NodeList *nodes) {
 				if(q->type&P_INLINE) parseSemanticError("Cannot use an inline procedure in an expression");
 				if (refSyntax) {
 					d.type |= P_REFERENCE; // this will make node stringify when writing code
-					emitNode(p, nodes, &d); 
+					emitNode(p, nodes, &d);
 				} else if (isExpectingProcArg() && (expectToken('(') == -1))  {
 					ungetToken();
 					emitNode(p, nodes, &d); // emit procedure ID directly
@@ -972,7 +1053,7 @@ static void factor(Procedure *p, NodeList *nodes) {
 				else {
 					if (expectToken('[') != -1 || expectToken('.') != -1) {  // global var
 						parseArrayDereference(p, nodes, d, 0);
-					} 
+					}
 					else
 						emitNode(p, nodes, &d);
 				}
@@ -1206,7 +1287,7 @@ static void parseFuncArgs(Procedure *p, NodeList *nodes, Procedure *q) {
 	if (q) {
 		if (q->numArgs != -1) {
 			if (args > q->numArgs || args < q->minArgs) {
-				parseSemanticError("parseFuncArgs: Wrong number of arguments to procedure %s, must be from %d to %d.",
+				parseSemanticError("Wrong number of arguments to procedure %s, must be from %d to %d.",
 					getName(q->name, currentProgram->namelist), q->minArgs, q->numArgs);
 			}
 			// phobos2077 - optional arguments:
@@ -1392,7 +1473,7 @@ static void parseStatementInternal(Procedure *p, char requireSemicolon) {
 			case T_SYMBOL: {
 				int t, op, setArray = 0;
 				LexData d, symb;
-				symb = lexData; 
+				symb = lexData;
 				t = lex();
 				if (t == '[' || t == '.') {
 					parseArrayAssignment(p, &p->nodes, symb);
@@ -1673,27 +1754,43 @@ int procedure(void) {
 		}
 	}
 
-	if (p->defined == 1 && p->numArgs != numArgs) {
-		parseSemanticError("Wrong number of arguments to procedure %s\n",
-				getName(p->name, currentProgram->namelist));
+	if (p->defined == 1) {
+		if (p->numArgs != numArgs) {
+			parseSemanticError("Wrong number of arguments to procedure %s\n",
+					getName(p->name, currentProgram->namelist));
+		} else if (numArgs != minArgs) {
+			parseSemanticError("Default argument values are not allowed for a forward-declared procedure: %s\n",
+					getName(p->name, currentProgram->namelist));
+		}
+	} else if (p->defined == 0) {
+		p->numArgs = numArgs;
+		p->minArgs = minArgs;
 	}
 
 	if (expectToken(';') != -1) {
-		if(p->type&P_INLINE) parseSemanticError("Cannot forward declare in inline procedure");
+		char* tmpNames = 0;
+		copyVariables(&p->variables, &tmpNames, &args, argNames);
 		freeVariableList(&args);
 		if (argNames) free(argNames);
+		if (tmpNames) free(tmpNames);
+		if(p->type&P_INLINE) parseSemanticError("Cannot forward declare in inline procedure");
 		p->defined = 1;
-		p->numArgs = numArgs;
-		p->minArgs = minArgs;
 		return 0;
 	}
+	if (p->defined == 1) {
+		int i;
+		for (i=0; i < args.numVariables; ++i) {
+			p->variables.variables[i].name = addName(&p->namelist, getName(args.variables[i].name, argNames));
+		}
+	} else {
+		copyVariables(&p->variables, &p->namelist, &args, argNames);
+	}
+
+	freeVariableList(&args);
+	if (argNames) free(argNames);
 
 	p->start=lexGetLineno(currentInputStream);
 	p->fstart=lexGetFilename(currentInputStream);
-
-	copyVariables(&p->variables, &p->namelist, &args, argNames);
-	freeVariableList(&args);
-	if (argNames) free(argNames);
 
 	if (expectToken(T_IN) != -1) {
 		if (expectToken(T_CONSTANT) == -1)
@@ -1729,8 +1826,6 @@ int procedure(void) {
 	}
 
 	p->defined = 2;
-	p->numArgs = numArgs;
-	p->minArgs = minArgs;
 
 	p->end=lexGetLineno(currentInputStream);
 	p->fend=lexGetFilename(currentInputStream);
@@ -1809,7 +1904,7 @@ void dumpNodes(Procedure* p, NodeList* nodes, FILE* f) {
 		switch (node.token) {
 		case T_START_STATEMENT:
 		case T_START_EXPRESSION:
-			if (nodes->nodes[i].token == T_START_EXPRESSION) 
+			if (nodes->nodes[i].token == T_START_EXPRESSION)
 				fprintf(f, "EXPRESSION:");
 			else
 				fprintf(f, "STATEMENT:");
@@ -1834,7 +1929,7 @@ void dumpNodes(Procedure* p, NodeList* nodes, FILE* f) {
 		default:
 			if (node.token < 127)
 				fprintf(f, "'%c'", node.token);
-			else if (lexGetToken(node.token)) 
+			else if (lexGetToken(node.token))
 				fprintf(f, "%s", lexGetToken(node.token));
 			else
 				fprintf(f, "%d", node.token);
@@ -1892,7 +1987,7 @@ void parse(InputStream *stream, const char *output) {
 
 	lexClose();
 	currentInputStream->lineno = -1;
-	if (optimize) 
+	if (optimize)
 		optimizeTree(currentProgram);
 	if (output) {
 		if (dumpTree) {
@@ -1923,12 +2018,12 @@ int _stdcall getProcNamespaceSize(int i) {
 	if(!currentProgram->procedures.procedures[i+1].namelist) return -1;
 	return *(unsigned int*)currentProgram->procedures.procedures[i+1].namelist;
 }
-void _stdcall getProcNamespace(int i, char* data) { 
+void _stdcall getProcNamespace(int i, char* data) {
 	unsigned int size=*(unsigned int*)currentProgram->procedures.procedures[i+1].namelist;
 	memcpy(data, currentProgram->procedures.procedures[i+1].namelist+4, size);
 }
-int _stdcall numVars() { 
-	return (currentProgram->variables.numVariables + currentProgram->externals.numVariables); 
+int _stdcall numVars() {
+	return (currentProgram->variables.numVariables + currentProgram->externals.numVariables);
 }
 void _stdcall getVar(int i, Variable* var) {
 	int numNormalVars = currentProgram->variables.numVariables;
@@ -1950,10 +2045,10 @@ void _stdcall getNamespace(char* data) {
 	unsigned int size=*(unsigned int*)currentProgram->namelist;
 	memcpy(data, currentProgram->namelist+4, size);
 }
-int _stdcall stringspaceSize() { 
-	return currentProgram->stringspace 
-		? *(unsigned int*)currentProgram->stringspace 
-		: 0; 
+int _stdcall stringspaceSize() {
+	return currentProgram->stringspace
+		? *(unsigned int*)currentProgram->stringspace
+		: 0;
 }
 void _stdcall getStringspace(char* data) {
 	unsigned int size=*(unsigned int*)currentProgram->stringspace;
