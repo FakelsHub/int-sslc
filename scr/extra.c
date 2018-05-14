@@ -44,7 +44,7 @@ static const SfallOpcode sfall_opcodes[] = {
 	SFALLSTMTPROC("register_hook_proc", TS_REGISTER_HOOK_PROC, 2, (2))
 	SFALLEXPR("log", TS_LOG, 1)
 	SFALLEXPR("exponent", TS_EXP, 1)
-	SFALLEXPR(0 /*"ceil"*/, TS_CEIL, 1)
+	SFALLEXPR("ceil", TS_CEIL, 1)
 	SFALLEXPR("round", TS_ROUND, 1)
 	SFALLEXPR("message_str_game", TS_MESSAGE_STR_GAME, 2)
 	SFALLEXPR("sneak_success", TS_SNEAK_SUCCESS, 0)
