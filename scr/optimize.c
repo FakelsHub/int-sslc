@@ -250,7 +250,7 @@ static int ConstantFolding(NodeList* _nodes) {
 				RemoveNodes(_nodes, i-2, 2);
 				i -= 2;
 			}/* AND/OR were changed in the tree
-			    else if(token==T_AND||token==T_OR) {
+				else if(token==T_AND||token==T_OR) {
 				if((nodes[i-1].token==T_CONSTANT && nodes[i-1].value.type!=V_STRING) || (nodes[i-2].token==T_CONSTANT && nodes[i-2].value.type!=V_STRING)) {
 					if((nodes[i-1].token==T_SYMBOL&&!(nodes[i-1].value.type&P_PROCEDURE)) || (nodes[i-2].token==T_SYMBOL&&!(nodes[i-1].value.type&P_PROCEDURE))) {
 						int value, found=0;
@@ -421,11 +421,11 @@ static int ConstantPropagation(NodeList* _nodes, Variable* vars, Value* values, 
 }
 
 #define SkipStatement { statementdepth=1;                                                                \
-	                  assert(nodes[i-1].token==T_START_STATEMENT);                                       \
+                      assert(nodes[i-1].token==T_START_STATEMENT);                                       \
                       while(statementdepth) { if(nodes[i].token==T_START_STATEMENT) statementdepth++;    \
                                               else if(nodes[i].token==T_END_STATEMENT) statementdepth--; \
-											  i++;                                                       \
-					  }}
+                                              i++;                                                       \
+                      }}
 
 static void EatStatement(NodeList* _nodes, int start) {
 	int statementdepth=1, i=start+1;
@@ -737,64 +737,65 @@ static void OptimizeProcedure(Procedure* proc) {
 }
 
 int IsProtectedProc(const char* c) {
-	 // this should be the full list of procedures (copy-pasted directly from EXE)
-	 Protect("no_p_proc");
-	 Protect("start");
-	 Protect("spatial_p_proc");
-	 Protect("description_p_proc");
-	 Protect("pickup_p_proc");
-	 Protect("drop_p_proc");
-	 Protect("use_p_proc");
-	 Protect("use_obj_on_p_proc");
-	 Protect("use_skill_on_p_proc");
-	 Protect("talk_p_proc");
-	 Protect("critter_p_proc");
-	 Protect("combat_p_proc");
-	 Protect("damage_p_proc");
-	 Protect("map_enter_p_proc");
-	 Protect("map_exit_p_proc");
-	 Protect("create_p_proc");
-	 Protect("destroy_p_proc");
-	 Protect("look_at_p_proc");
-	 Protect("timed_event_p_proc");
-	 Protect("map_update_p_proc");
-	 Protect("push_p_proc");
-	 Protect("is_dropping_p_proc");
-	 Protect("combat_is_starting_p_proc");
-	 Protect("combat_is_over_p_proc");
+	// this should be the full list of procedures (copy-pasted directly from EXE)
+	Protect("no_p_proc");
+	Protect("start");
+	Protect("spatial_p_proc");
+	Protect("description_p_proc");
+	Protect("desc_p_proc"); // Fallout 1
+	Protect("pickup_p_proc");
+	Protect("drop_p_proc");
+	Protect("use_p_proc");
+	Protect("use_obj_on_p_proc");
+	Protect("use_skill_on_p_proc");
+	Protect("talk_p_proc");
+	Protect("critter_p_proc");
+	Protect("combat_p_proc");
+	Protect("damage_p_proc");
+	Protect("map_enter_p_proc");
+	Protect("map_exit_p_proc");
+	Protect("create_p_proc");
+	Protect("destroy_p_proc");
+	Protect("look_at_p_proc");
+	Protect("timed_event_p_proc");
+	Protect("map_update_p_proc");
+	Protect("push_p_proc");
+	Protect("is_dropping_p_proc");
+	Protect("combat_is_starting_p_proc");
+	Protect("combat_is_over_p_proc");
 
-	 Protect("node998");
-	 Protect("node999");
-	 return 0;
+	Protect("node998");
+	Protect("node999");
+	return 0;
 }
 static int __once = 0;
 static void EliminateProcedure(Program *prog, int id) {
 	int i, j;
-    parseMessageAtNode(&prog->procedures.procedures[id].nodes.nodes[0], "Eliminating procedure %s", prog->namelist + prog->procedures.procedures[id].name);
-    /*, remLen, srcOfs;
-    long *namesLen;
+	parseMessageAtNode(&prog->procedures.procedures[id].nodes.nodes[0], "Eliminating procedure %s", prog->namelist + prog->procedures.procedures[id].name);
+	/*, remLen, srcOfs;
+	long *namesLen;
 	char *src, *dst;
 	namesLen = (long*)prog->namelist;
 	dst = prog->namelist + prog->procedures.procedures[id].name - 2;
 	src = dst + 2 + *(short*)dst;
-    srcOfs = src - prog->namelist + 2;
+	srcOfs = src - prog->namelist + 2;
 	remLen = src - dst;
 	//parseMessageAtNode(&prog->procedures.procedures[id].nodes.nodes[0], "Eliminating procedure %s total=%d srcOfs=%d dstOfs=%d rem=%d move=%d", prog->namelist + prog->procedures.procedures[id].name, namesLen, srcOfs-prog->namelist, dstOfs-prog->namelist, remLen, prog->namelist+*namesLen-srcOfs);
 	// remove from name list
 	if (!__once) {
 		memmove(dst, src, *namesLen - (src - prog->namelist) + 4);
-        for (i = id; i < prog->procedures.numProcedures; i++) {
-            if (prog->procedures.procedures[i].name >= srcOfs)
-                prog->procedures.procedures[i].name -= remLen;
-        }
-        for (i = 0; i < prog->variables.numVariables; i++) {
-            if (prog->variables.variables[i].name >= srcOfs)
-                prog->variables.variables[i].name -= remLen;
-        }
-        for (i = 0; i < prog->externals.numVariables; i++) {
-            if (prog->externals.variables[i].name >= srcOfs)
-                prog->externals.variables[i].name -= remLen;
-        }
+		for (i = id; i < prog->procedures.numProcedures; i++) {
+			if (prog->procedures.procedures[i].name >= srcOfs)
+				prog->procedures.procedures[i].name -= remLen;
+		}
+		for (i = 0; i < prog->variables.numVariables; i++) {
+			if (prog->variables.variables[i].name >= srcOfs)
+				prog->variables.variables[i].name -= remLen;
+		}
+		for (i = 0; i < prog->externals.numVariables; i++) {
+			if (prog->externals.variables[i].name >= srcOfs)
+				prog->externals.variables[i].name -= remLen;
+		}
 		*namesLen -= remLen;
 		__once = 1;
 	}*/
