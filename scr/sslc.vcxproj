@@ -115,6 +115,9 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release (for Fallout1)|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release (for Fallout1)|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release (for Fallout1)|Win32'">false</LinkIncremental>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release (dll)|Win32'">parser</TargetName>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release (dll)|Win32'">true</PostBuildEventUseInBuild>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compile</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -157,11 +160,17 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StringPooling>true</StringPooling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -174,7 +183,7 @@
       </ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "C:\Games\Fallout2\sfall_modderspack\ScriptEditor\resources\compile.exe"</Command>
+      <Command>move "$(TargetPath)" "$(SolutionDir)Build\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win2K|Win32'">
@@ -219,11 +228,17 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StringPooling>true</StringPooling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -235,7 +250,7 @@
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "C:\Games\Fallout2\sfall_modderspack\ScriptEditor\resources\parser.dll"</Command>
+      <Command>move "$(TargetPath)" "$(SolutionDir)Build\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (for Fallout1)|Win32'">
