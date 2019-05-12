@@ -64,6 +64,8 @@ static const SfallOpcode sfall_opcodes[] = {
 	SFALLEXPRSTMT("sfall_func4", TS_SFALL_METARULE4, 5)
 	SFALLEXPRSTMT("sfall_func5", TS_SFALL_METARULE5, 6)
 	SFALLEXPRSTMT("sfall_func6", TS_SFALL_METARULE6, 7)
+
+	SFALLEXPRSTMT("sfall_func7", TS_SFALL_METARULE7, 8)
 };
 
 int numSfallOpcodes() {

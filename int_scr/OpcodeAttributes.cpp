@@ -797,6 +797,8 @@ COpcode::CF2OpcodeAttributesMap::CF2OpcodeAttributesMap()
 	SetAt(O_TS_SFALL_METARULE4, COpcodeAttributes("O_TS_SFALL_METARULE4", "sfall_func4", 5, expression));
 	SetAt(O_TS_SFALL_METARULE5, COpcodeAttributes("O_TS_SFALL_METARULE5", "sfall_func5", 6, expression));
 	SetAt(O_TS_SFALL_METARULE6, COpcodeAttributes("O_TS_SFALL_METARULE6", "sfall_func6", 7, expression));
+
+	SetAt(O_TS_SFALL_METARULE7, COpcodeAttributes("O_TS_SFALL_METARULE7", "sfall_func7", 8, expression));
     // sfall end
 
     SetAt(O_STRINGOP, COpcodeAttributes("O_STRINGOP", "", 0, expression));
