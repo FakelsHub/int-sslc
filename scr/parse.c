@@ -214,9 +214,11 @@ void parseSemanticError(const char *format, ...) {
 		parseOutput("[Error] <Semantic> <%s>:%d:%d: %s\n", lexGetFilename(currentInputStream), lexGetLineno(currentInputStream), lexGetColumn(currentInputStream), buf);
 	va_end(arg);
 
+#ifndef BUILDING_DLL
 	compilerErrorTotal++;
 
 	longjmp(currentProgram->env, 1);
+#endif
 }
 
 static void freeVariableList(VariableList *v) {
@@ -1127,7 +1129,7 @@ static void term_prime(Procedure *p, NodeList *nodes) {
 		//      term(p, nodes);
 		factor(p, nodes);
 		node = &nodes->nodes[nodes->numNodes - 1];
-		if (node->token == T_CONSTANT && node->value.type != V_STRING && node->value.intData == 0) {
+		if ((i == '/' || i == '%') && node->token == T_CONSTANT && node->value.type != V_STRING && node->value.intData == 0) {
 			parseSemanticError("Division by zero!");
 		}
 		emitOp(p, nodes, i);
