@@ -87,7 +87,7 @@ typedef struct {
    };
    char *namelist;     /* this program's namelist */
    int numArgs;
-   int defined;         // set to 1 if this has been define (and not just declared)
+   int defined;
    VariableList variables;
    int* references;
    int numRefs;
@@ -100,6 +100,7 @@ typedef struct {
    const char* fend;
    NodeList nodes;
    int minArgs; // minimum number of arguments for call
+   int deftype; // set to 1 if this has been define (and not just declared)
 } Procedure;
 
 typedef struct {

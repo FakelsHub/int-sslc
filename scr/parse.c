@@ -651,7 +651,7 @@ static Procedure *addProcedure(ProcedureList *procs, char **namelist, char *name
 	procs->procedures[i].numArgs = 0;
 	procs->procedures[i].minArgs = 0;
 	procs->procedures[i].uses = 0;
-	procs->procedures[i].defined = 0;
+	procs->procedures[i].deftype = 0;
 	procs->procedures[i].variables.variables = 0;
 	procs->procedures[i].variables.numVariables = 0;
 	procs->procedures[i].nodes.numNodes = 0;
@@ -667,6 +667,7 @@ static Procedure *addProcedure(ProcedureList *procs, char **namelist, char *name
 	procs->procedures[i].fstart=0;
 	procs->procedures[i].start=-1;
 	procs->procedures[i].end=-1;
+	procs->procedures[i].defined = -1;
 
 	return procs->procedures + i;
 }
@@ -686,7 +687,7 @@ static int externProcedure(ProcedureList *pl, char **namelist, int type) {
 	p = findProcedure(pl, namelist, lexData.stringData);
 
 	if (p) {
-		if (p->defined == 2)
+		if (p->deftype == 2)
 			parseSemanticError("Redefinition of procedure %s.", lexData.stringData);
 	}
 	else {
@@ -723,7 +724,7 @@ static int externProcedure(ProcedureList *pl, char **namelist, int type) {
 		parseError("Can't define procedures in an import or export block");
 
 	p->numArgs = p->minArgs = numArgs;
-	p->defined = 1;
+	p->deftype = 1;
 	p->type |= type;
 	if (type | P_EXPORT)
 		p->uses = 1;
@@ -1707,7 +1708,7 @@ int procedure(void) {
 		if (p->type & P_IMPORT)
 			parseSemanticError("Can't define imported procedures");
 
-		if (p->defined == 2)
+		if (p->deftype == 2)
 			parseSemanticError("Redefinition of procedure %s.", lexData.stringData);
 	}
 	else {
@@ -1720,6 +1721,8 @@ int procedure(void) {
 	if(p->declared==-1) {
 		p->declared=lexGetLineno(currentInputStream);
 		p->fdeclared=lexGetFilename(currentInputStream);
+	} else {
+		p->defined = lexGetLineno(currentInputStream);
 	}
 
 	if(critical) p->type|=P_CRITICAL;
@@ -1754,7 +1757,7 @@ int procedure(void) {
 		}
 	}
 
-	if (p->defined == 1) {
+	if (p->deftype == 1) {
 		if (p->numArgs != numArgs) {
 			parseSemanticError("Wrong number of arguments to procedure %s\n",
 					getName(p->name, currentProgram->namelist));
@@ -1762,7 +1765,7 @@ int procedure(void) {
 			parseSemanticError("Default argument values are not allowed for a forward-declared procedure: %s\n",
 					getName(p->name, currentProgram->namelist));
 		}
-	} else if (p->defined == 0) {
+	} else if (p->deftype == 0) {
 		p->numArgs = numArgs;
 		p->minArgs = minArgs;
 	}
@@ -1774,10 +1777,10 @@ int procedure(void) {
 		if (argNames) free(argNames);
 		if (tmpNames) free(tmpNames);
 		if(p->type&P_INLINE) parseSemanticError("Cannot forward declare in inline procedure");
-		p->defined = 1;
+		p->deftype = 1;
 		return 0;
 	}
-	if (p->defined == 1) {
+	if (p->deftype == 1) {
 		int i;
 		for (i=0; i < args.numVariables; ++i) {
 			p->variables.variables[i].name = addName(&p->namelist, getName(args.variables[i].name, argNames));
@@ -1825,7 +1828,7 @@ int procedure(void) {
 		emitOp(p, &p->nodes, T_END);
 	}
 
-	p->defined = 2;
+	p->deftype = 2;
 
 	p->end=lexGetLineno(currentInputStream);
 	p->fend=lexGetFilename(currentInputStream);

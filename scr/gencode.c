@@ -880,7 +880,7 @@ static void writeCode(NodeList *n, FILE *f) {
 
 extern int IsProtectedProc(const char* c);
 static void writeProcedure(Procedure *p, int tableOffset, FILE *f) {
-	if (!(p->type & (P_IMPORT|P_EXPORT)) && p->defined == 1)
+	if (!(p->type & (P_IMPORT|P_EXPORT)) && p->deftype == 1)
 		parseError("No code for procedure %s\n", getName(p->name, currentProgram->namelist));
 
 	if (!p->nodes.numNodes) return;
@@ -935,7 +935,7 @@ static void writeProcedures(Program *prog, int tableOffset, FILE *f) {
 
 		// procedure at location zero is intentially boguz, and shouldn't
 		// be tested
-		if (i && !p->procedures[i].defined)
+		if (i && !p->procedures[i].deftype)
 			parseError("Procedure %s prototyped but never defined\n", getName(p->procedures[i].name, prog->namelist));
 
 		if (!(p->procedures[i].type & P_IMPORT)) {
