@@ -221,7 +221,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BUILDING_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILDING_DLL;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -327,6 +327,7 @@
     <ClInclude Include="parse.h" />
     <ClInclude Include="parseext.h" />
     <ClInclude Include="parselib.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="sfalltok.h" />
     <ClInclude Include="system.H" />
     <ClInclude Include="tokens.h" />
@@ -334,6 +335,11 @@
   <ItemGroup>
     <None Include="exports.def" />
     <None Include="testscript.ssl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sslc.rc">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release (dll)|Win32'">/D "BUILDING_DLL" %(AdditionalOptions)</AdditionalOptions>
+    </ResourceCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

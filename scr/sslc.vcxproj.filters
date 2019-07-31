@@ -103,9 +103,13 @@
     <ClInclude Include="sfalltok.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
     <None Include="testscript.ssl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sslc.rc" />
   </ItemGroup>
 </Project>
