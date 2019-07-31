@@ -41,7 +41,7 @@ extern void FreeFileNames();
 extern void ungetToken(void);
 extern void setNextToken(LexData *data);
 extern int lex(void);
-extern void initLex(void), lexClose(void);
+extern void initLex(void), lexClose(void), lexClear(void);
 extern void startLex(InputStream *);
 extern void continueLex(InputStream *);
 extern int lexGetLineno(InputStream *);

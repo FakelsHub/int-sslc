@@ -111,6 +111,17 @@ void lexClose(void) {
 	inited = 0;
 	if(cache.data) free(cache.data);
 }
+
+#ifdef BUILDING_DLL
+// clear token names
+void lexClear(void) {
+	unsigned int i;
+	for (i = 256; i < T_END_TOKEN; i++) {
+		tokens[i] = 0;
+	}
+}
+#endif
+
 void initLex(void) {
 	int i;
 

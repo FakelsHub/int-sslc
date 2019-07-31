@@ -116,10 +116,10 @@ int main(int argc, char **argv)
 		argc--;
 	}
 
-	if(backwardcompat&&(optimize||preprocess)) {
+	/*if(backwardcompat&&(optimize||preprocess)) {
 		parseOutput("Invalid option combination; cannot run preprocess or optimization passes in backward compatibility mode\n");
 		return -1;
-	}
+	}*/
 
 	if(!nologo) PrintLogo();
 
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 
 static int inited=0;
 
-int _stdcall parse_main(const char *filePath, const char* origPath, const char* dir, const char* def) {
+int _stdcall parse_main(const char *filePath, const char* origPath, const char* dir, const char* def, int backMode) {
 	InputStream foo;
 	char tmpbuf[260];
 	//char cwd[1024];
@@ -238,6 +238,11 @@ int _stdcall parse_main(const char *filePath, const char* origPath, const char* 
 		freeCurrentProgram();
 		FreeFileNames();
 		inited=0;
+	}
+
+	if (backMode) {
+		backwardcompat = 1;
+		lexClear();
 	}
 
 	foo.name=AddFileName(origPath);
@@ -271,10 +276,8 @@ int _stdcall parse_main(const char *filePath, const char* origPath, const char* 
 	inited=1;
 	if (parseroutput)
 		fclose(parseroutput);
-	if (compilerErrorTotal) {
-		return 1;
-	}
-	return 0;
+
+	return (compilerErrorTotal) ? 1 : 0;
 }
 
 #endif
