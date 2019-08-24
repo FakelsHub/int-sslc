@@ -256,6 +256,7 @@ int _stdcall parse_main(const char *filePath, const char* origPath, const char* 
 	//GetCurrentDirectoryA(1024, cwd);
 	//chdir(dir);
 	compilerErrorTotal = 0;
+	compilerSyntaxError = 0;
 	preprocess_fullpath = 1;
 	if (mcpp_lib_main(foo.file, newfile, origPath, dir, def)) {
 		fclose(foo.file);
@@ -277,7 +278,7 @@ int _stdcall parse_main(const char *filePath, const char* origPath, const char* 
 	if (parseroutput)
 		fclose(parseroutput);
 
-	return (compilerErrorTotal) ? 1 : 0;
+	return (compilerErrorTotal) ? 1 : (compilerSyntaxError) ? -1 : 0;
 }
 
 #endif

@@ -17,6 +17,8 @@
 #include "parseext.h"
 
 int compilerErrorTotal;
+char compilerSyntaxError;
+
 extern int backwardcompat;
 extern int warnings;
 extern int optimize;
@@ -218,6 +220,8 @@ void parseSemanticError(const char *format, ...) {
 	compilerErrorTotal++;
 
 	longjmp(currentProgram->env, 1);
+#else
+	compilerSyntaxError = 1;
 #endif
 }
 

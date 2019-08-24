@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 
-extern	int	compilerErrorTotal;
+extern int	compilerErrorTotal;
+extern char compilerSyntaxError;
 
 enum { V_INT=1, V_FLOAT, V_STRING };
 
