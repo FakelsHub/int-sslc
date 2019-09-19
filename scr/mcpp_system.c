@@ -222,7 +222,8 @@ void    init_system( void)
 
 void    do_options(
 	const char* dir,
-	const char* def
+	const char* def,
+	const char* include_dir
 )
 /*
  * Process command line arguments, called only at MCPP startup.
@@ -246,11 +247,10 @@ void    do_options(
     sprintf( cur_work_dir + strlen( cur_work_dir), "%c%c", PATH_DELIM, EOS);
         /* Append trailing path-delimiter   */
 
-	if (dir)
-		set_a_dir(dir);
-
-	if (strlen(def) > 0)  /* define macros */
-		def_list[def_cnt++] = def;
+	if (dir) set_a_dir(dir);
+	if (include_dir) set_a_dir(include_dir);
+	/* define macros */
+	if (def) def_list[def_cnt++] = (char*)def;
 
     /* Check consistency of specified options, set some variables   */
     chk_opts( sflag, trad);

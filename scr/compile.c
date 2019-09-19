@@ -10,7 +10,7 @@
 int noinputwait = 0;
 int warnings = 1;
 int backwardcompat = 0;
-int optimize = 0;
+int optimize = 1;
 int debug = 0;
 int preprocess_fullpath = 0;
 int dumpTree = 0;
@@ -31,14 +31,14 @@ FILE *parseroutput;
 #endif
 
 static void PrintLogo() {
-	parseOutput("Startreck scripting language compiler (Fallout 2 sfall edition 4.2) for SSE 4.1\n\n"
+	parseOutput("Startreck scripting language compiler (Fallout 2 sfall edition 4.2)\nfor sfall script editor 4.1.5\n\n"
 		"Preprocessing handled by mcpp 2.7.2\n"
 		"Copyright (c) 1998, 2002-2008 Kiyoshi Matsui <kmatsui@t3.rim.or.jp>\n"
         "All rights reserved.\n\n");
 }
 
 extern int warn_level; //the mcpp warning level
-extern int mcpp_lib_main(FILE *fin, FILE *fout, const char* in_file, const char* dir, const char* def);
+extern int mcpp_lib_main(FILE *fin, FILE *fout, const char* in_file, const char* dir, const char* def, const char* include_dir);
 //extern void set_a_dir(const char * dirname);
 
 #ifndef BUILDING_DLL
@@ -52,6 +52,8 @@ int main(int argc, char **argv)
 	int preprocess=0;
 	int onlypreprocess=0;
 
+	char* includeDir = NULL, *defMacro = NULL;
+
 	if (argc < 2) {
 		PrintLogo();
 		parseOutput("Usage: compile {switches} filename [-o outputname] [filename [..]]\n");
@@ -62,10 +64,12 @@ int main(int argc, char **argv)
 		parseOutput("  -p    preprocess\n");
 		parseOutput("  -P    preprocess only. (Don't generate .int)\n");
 		parseOutput("  -F    write full file paths in #line directives\n");
-		parseOutput("  -O<level>    optimize (0 - none, 1 - only remove unreferenced globals, 2 - full, 3 - full+experimental, don't use!)\n");
+		parseOutput("  -O<level> optimize (0 - none, 1 - only remove unreferenced globals (default), 2 - full, 3 - full+experimental, don't use!)\n");
 		parseOutput("  -d    show debug info\n");
 		parseOutput("  -s    enable short-circuit evaluation for boolean operators (AND, OR)\n");
 		parseOutput("  -D    dump abstract syntax tree after optimizations\n");
+		parseOutput("  -m<defmacro> defines a macro named \"macro\"\n");
+		parseOutput("  -I<path> specify the additional directory to search include files\n");
 		return 1;
 	}
 
@@ -91,7 +95,7 @@ int main(int argc, char **argv)
 			nologo=1;
 			break;
 		case 'O':
-			if (strlen(argv[1]) == 2) optimize = 2;
+			if (strlen(argv[1]) == 2) optimize = 2; // full
 			else optimize = atoi(&argv[1][2]);
 			break;
 		case 'P':
@@ -108,6 +112,12 @@ int main(int argc, char **argv)
 		case 's':
 			shortCircuit = 1;
 			break;
+		case 'm':
+			defMacro = &argv[1][2];
+			break;
+		case 'I':
+			includeDir = &argv[1][2];
+			break;
 		default:
 			parseOutput("Unknown option %c\n", argv[1][1]);
 		}
@@ -115,7 +125,7 @@ int main(int argc, char **argv)
 		argv++;
 		argc--;
 	}
-
+	// disable Fakels
 	/*if(backwardcompat&&(optimize||preprocess)) {
 		parseOutput("Invalid option combination; cannot run preprocess or optimization passes in backward compatibility mode\n");
 		return -1;
@@ -124,6 +134,9 @@ int main(int argc, char **argv)
 	if(!nologo) PrintLogo();
 
 	compilerErrorTotal = 0;
+
+	if (defMacro) parseOutput("Define macro: %s\n", defMacro);
+	if (includeDir) parseOutput("Set include directory: %s\n", includeDir);
 
 	while(argv[1]) {
 		file = argv[1];
@@ -190,7 +203,7 @@ int main(int argc, char **argv)
 						newfile=fopen(tmpbuf, "w+DT");
 //#endif
 					}
-					if(mcpp_lib_main(foo.file, newfile, buf.name, buf.name, "")) {
+					if(mcpp_lib_main(foo.file, newfile, buf.name, buf.name, defMacro, includeDir)) {
 						parseOutput("*** An error occured during preprocessing of %s ***\n", buf.name);
 						return 1;
 					}
@@ -227,7 +240,7 @@ int main(int argc, char **argv)
 
 static int inited=0;
 
-int _stdcall parse_main(const char *filePath, const char* origPath, const char* dir, const char* def, int backMode) {
+int _stdcall parse_main(const char *filePath, const char* origPath, const char* dir, const char* def, const char* include_dir, int backMode) {
 	InputStream foo;
 	char tmpbuf[260];
 	//char cwd[1024];
@@ -258,7 +271,7 @@ int _stdcall parse_main(const char *filePath, const char* origPath, const char* 
 	compilerErrorTotal = 0;
 	compilerSyntaxError = 0;
 	preprocess_fullpath = 1;
-	if (mcpp_lib_main(foo.file, newfile, origPath, dir, def)) {
+	if (mcpp_lib_main(foo.file, newfile, origPath, dir, def, include_dir)) {
 		fclose(foo.file);
 		fclose(newfile);
 		if (parseroutput)
