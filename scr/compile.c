@@ -7,10 +7,15 @@
 #include "parse.h"
 #include <io.h>
 
+#ifdef BUILDING_DLL
+int optimize = 0;
+#else
+int optimize = 1; // default for exe
+#endif
+
 int noinputwait = 0;
 int warnings = 1;
 int backwardcompat = 0;
-int optimize = 1;
 int debug = 0;
 int preprocess_fullpath = 0;
 int dumpTree = 0;
@@ -68,7 +73,7 @@ int main(int argc, char **argv)
 		parseOutput("  -d    show debug info\n");
 		parseOutput("  -s    enable short-circuit evaluation for boolean operators (AND, OR)\n");
 		parseOutput("  -D    dump abstract syntax tree after optimizations\n");
-		parseOutput("  -m<defmacro> defines a macro named \"macro\"\n");
+		parseOutput("  -m<macro[=val]> defines a macro named \"macro\" for conditional compilation\n");
 		parseOutput("  -I<path> specify the additional directory to search include files\n");
 		return 1;
 	}
