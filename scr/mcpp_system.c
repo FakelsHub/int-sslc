@@ -223,7 +223,8 @@ void    init_system( void)
 void    do_options(
     const char* dir,
     const char* def,
-    const char* include_dir
+    const char* include_dir,
+    const char* second_dir
 )
 /*
  * Process command line arguments, called only at MCPP startup.
@@ -249,6 +250,7 @@ void    do_options(
 
     if (dir) set_a_dir(dir);
     if (include_dir) set_a_dir(include_dir);
+    if (second_dir) set_a_dir(second_dir);
     /* define macros */
     if (def) def_list[def_cnt++] = (char*)def;
 
@@ -553,7 +555,7 @@ static void set_sys_dirs(
 
 }
 
-static void set_a_dir(
+void set_a_dir(
     const char *    dirname                 /* The path-name        */
 )
 /*

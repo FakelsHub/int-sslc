@@ -44,7 +44,7 @@ static void PrintLogo() {
 
 extern int warn_level; //the mcpp warning level
 extern int mcpp_lib_main(FILE *fin, FILE *fout, const char* in_file, const char* dir, const char* def, const char* include_dir);
-//extern void set_a_dir(const char * dirname);
+extern void mcpp_add_include_dir(char*);
 
 #ifndef BUILDING_DLL
 int main(int argc, char **argv)
@@ -121,7 +121,10 @@ int main(int argc, char **argv)
 			defMacro = &argv[1][2];
 			break;
 		case 'I':
-			includeDir = &argv[1][2];
+			if (!includeDir)
+				includeDir = &argv[1][2];
+			else
+				mcpp_add_include_dir(&argv[1][2]);
 			break;
 		default:
 			parseOutput("Unknown option %c\n", argv[1][1]);
