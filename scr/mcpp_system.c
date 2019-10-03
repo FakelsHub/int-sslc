@@ -555,7 +555,7 @@ static void set_sys_dirs(
 
 }
 
-void set_a_dir(
+static void set_a_dir(
     const char *    dirname                 /* The path-name        */
 )
 /*
@@ -904,7 +904,13 @@ static int  open_include(
         has_dir = has_dir_src || has_dir_fname
                 || (**(infile->dirp) != EOS);
     }
-#ifndef BUILDING_DLL
+#ifdef BUILDING_DLL     /* Reordered search include files for DLL (fakels) */
+    if (full_path) {
+        if (open_file( &null, NULL, filename, FALSE, FALSE, FALSE))
+            return  TRUE;
+        return  FALSE;
+    }
+#else
     if ((searchlocal && ((search_rule & CURRENT) || !has_dir)) || full_path) {
         /*
          * Look in local directory first.
@@ -931,12 +937,12 @@ static int  open_include(
         return  TRUE;
 
 #ifdef BUILDING_DLL     /* Reordered search include files for DLL (fakels) */
-    if ((searchlocal && ((search_rule & CURRENT) || !has_dir)) || full_path) {
+    if ((searchlocal && ((search_rule & CURRENT) || !has_dir))) {
         /*
          * Look in local directory.
          * Try to open filename relative to the "current directory".
          */
-        if (open_file( &null, NULL, filename, searchlocal && !full_path, FALSE, FALSE))
+        if (open_file( &null, NULL, filename, searchlocal, FALSE, FALSE))
             return  TRUE;
     }
 #endif
