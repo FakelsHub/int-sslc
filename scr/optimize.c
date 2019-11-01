@@ -11,9 +11,9 @@
 
 #define Protect(a) if(_stricmp(c, a) == 0) return 1;
 
-#define F_OP(token,op) case token: out->floatData=fd1 op fd2; break;
+#define F_OP(token,op)  case token: out->floatData=fd1 op fd2; break;
 #define F_IOP(token,op) case token: out->type=V_INT; out->intData=fd1 op fd2; break;
-#define I_OP(token,op) case token: out->intData=in1->intData op in2->intData; break;
+#define I_OP(token,op)  case token: out->intData = in1->intData op in2->intData; break;
 
 #define VU_FIRST_ASSIGN_IS_PURE  0x01
 #define VU_FIRST_ASSIGN_IN_WHILE 0x02
@@ -35,8 +35,8 @@ static void assert(int i) {
 
 //Strip out some nods from a nodelist
 static void RemoveNodes(NodeList* nodes, int start, int count) {
-	memmove(&nodes->nodes[start], &nodes->nodes[start+count], (nodes->numNodes-(start+count))*sizeof(Node));
-	nodes->numNodes-=count;
+	memmove(&nodes->nodes[start], &nodes->nodes[start + count], (nodes->numNodes - (start + count)) * sizeof(Node));
+	nodes->numNodes -= count;
 	//not much point reallocing
 }
 
@@ -176,9 +176,9 @@ static void PerformConstOp(const Value* in1, const Value* in2, Value* out, int o
 	assert(in2->type==V_INT||in2->type==V_FLOAT);
 	isfloat = in1->type==V_FLOAT || in2->type==V_FLOAT;
 	if(isfloat) {
-		float fd1=in1->type==V_FLOAT?in1->floatData:(float)in1->intData;
-		float fd2=in2->type==V_FLOAT?in2->floatData:(float)in2->intData;
-		out->type=V_FLOAT;
+		float fd1 = in1->type == V_FLOAT ? in1->floatData : (float)in1->intData;
+		float fd2 = in2->type == V_FLOAT ? in2->floatData : (float)in2->intData;
+		out->type = V_FLOAT;
 		switch(op) {
 			F_OP('+', +)
 			F_OP('-', -)
@@ -192,11 +192,11 @@ static void PerformConstOp(const Value* in1, const Value* in2, Value* out, int o
 			F_IOP(T_GREATER_EQUAL, >=)
 		case T_AND:
 			out->type=V_INT;
-			out->intData=fd1!=0.0 && fd2!=0.0;
+			out->intData = (fd1 != 0.0) && (fd2 != 0.0);
 			break;
 		case T_OR:
 			out->type=V_INT;
-			out->intData=fd1!=0.0 || fd2!=0.0;
+			out->intData= (fd1 != 0.0) || (fd2 != 0.0);
 			break;
 		case T_BWAND:
 			out->type=V_INT;
@@ -238,17 +238,17 @@ static void PerformConstOp(const Value* in1, const Value* in2, Value* out, int o
 
 static int ConstantFolding(NodeList* _nodes) {
 	int i, token, matched=0;
-	Node* nodes=_nodes->nodes;
-	for(i=2;i<_nodes->numNodes;i++) {
+	Node* nodes = _nodes->nodes;
+	for(i = 2; i < _nodes->numNodes; i++) {
 		token=nodes[i].token;
 		if(isValidBinaryOp(token)) {
-			if(nodes[i-1].token==T_CONSTANT && nodes[i-2].token==T_CONSTANT && nodes[i-1].value.type!=V_STRING && nodes[i-2].value.type!=V_STRING) {
+			if(nodes[i - 1].token == T_CONSTANT && nodes[i - 2].token == T_CONSTANT && nodes[i - 1].value.type != V_STRING && nodes[i - 2].value.type != V_STRING) {
 				parseMessageAtNode(&nodes[i], "Folding constant binary expression");
-				matched=1;
-				PerformConstOp(&nodes[i-2].value, &nodes[i-1].value, &nodes[i].value, token, &nodes[i]);
-				nodes[i].token=T_CONSTANT;
-				RemoveNodes(_nodes, i-2, 2);
+				matched = 1;
+				PerformConstOp(&nodes[i - 2].value, &nodes[i - 1].value, &nodes[i].value, token, &nodes[i]);
+				nodes[i].token = T_CONSTANT;
 				i -= 2;
+				RemoveNodes(_nodes, i, 2);
 			}/* AND/OR were changed in the tree
 				else if(token==T_AND||token==T_OR) {
 				if((nodes[i-1].token==T_CONSTANT && nodes[i-1].value.type!=V_STRING) || (nodes[i-2].token==T_CONSTANT && nodes[i-2].value.type!=V_STRING)) {
@@ -272,7 +272,7 @@ static int ConstantFolding(NodeList* _nodes) {
 					}
 				}
 			}*/
-		} else if(token==T_NOT||token==T_BWNOT||token==T_NEGATE) {
+		} else if(token == T_NOT || token == T_BWNOT || token == T_NEGATE) {
 			if(nodes[i-1].token==T_CONSTANT && nodes[i-1].value.type!=V_STRING) {
 				parseMessageAtNode(&nodes[i], "Folding constant unary expression");
 				matched=1;
@@ -292,6 +292,65 @@ static int ConstantFolding(NodeList* _nodes) {
 				RemoveNodes(_nodes, i, 1);
 				i -= 1;
 			}
+		}
+	}
+	return matched;
+}
+
+static int isValidMathOp(int op) {
+	//           43           45           42           47
+	return op == '+' || op == '-' || op == '*' || op == '/';
+}
+
+// optimizes remaining not optimized mathematical operations (except for logical operations) | added: fakels
+static int ConstantFoldingPassTwo(NodeList* _nodes) {
+	int i, token, _token, isStartExp = 0;
+	int nResult = 0, tokenOp = 0, isNotEquals = 0, matched = 0;
+
+	Node* nodes = _nodes->nodes;
+	for (i = 2; i < _nodes->numNodes; i++)
+	{
+		token = nodes[i].token;
+		if (!isStartExp){
+			if (token == T_START_EXPRESSION) isStartExp = 1;
+			continue;
+		} else if (token == T_END_EXPRESSION) {
+			isStartExp = 0;
+			continue;
+		}
+		if (token == T_SYMBOL) {
+			tokenOp = 0;
+			continue;
+		}
+		if (token == T_CONSTANT && nodes[i].value.type != V_STRING) {
+			_token = nodes[i + 1].token;
+			if (!isValidMathOp(_token)) {
+				tokenOp = 0;
+				continue;
+			}
+			if (!tokenOp) {
+				tokenOp = _token;
+				nResult = i;
+				continue;
+			}
+			if (tokenOp != _token) {
+				if ((tokenOp == '+' && _token != '-') || (tokenOp == '-' && _token != '+')) {
+					isNotEquals = 1;
+				} else if ((tokenOp == '*' && _token != '/') || (tokenOp == '/' && _token != '*')) {
+					isNotEquals = 1;
+				}
+			}
+			if (!isNotEquals) {
+				parseMessageAtNode(&nodes[i + 1], "Pass two: Folding constant mathematics expression");
+				PerformConstOp(&nodes[nResult].value, &nodes[i].value, &nodes[nResult].value, _token, &nodes[i + 1]);
+				RemoveNodes(_nodes, i, 2);
+				i -= 2;
+				matched = 1;
+			} else {
+				isNotEquals = 0;
+			}
+			tokenOp = 0;
+			i--;
 		}
 	}
 	return matched;
@@ -321,17 +380,24 @@ static int ConstantPropagateExpression(Node* nodes, Variable* vars, Value* value
 }
 
 static int* FindAssignmentsInBlock(const Node* nodes, const Variable* vars, int varCount) {
-	int* results=(int*)calloc(1, varCount*4);
-	int statementdepth=1, var;
-	assert(nodes->token==T_START_STATEMENT);
-	while(statementdepth) {
-		switch(nodes->token) {
-		case T_START_STATEMENT: statementdepth++; break;
-		case T_END_STATEMENT: statementdepth--; break;
-		case T_ASSIGN: case T_ASSIGN_ADD: case T_ASSIGN_SUB:
-		case T_ASSIGN_MUL: case T_ASSIGN_DIV:
-			if(nodes[-1].token==T_SYMBOL&&(var=LookupVariable(&nodes[-1]))!=-1) {
-				results[var]=1;
+	int* results = (int*)calloc(1, varCount * 4);
+	int statementdepth = 1, var;
+	assert(nodes->token == T_START_STATEMENT);
+	while (statementdepth) {
+		switch (nodes->token) {
+		case T_START_STATEMENT:
+			statementdepth++;
+			break;
+		case T_END_STATEMENT:
+			statementdepth--;
+			break;
+		case T_ASSIGN:
+		case T_ASSIGN_ADD:
+		case T_ASSIGN_SUB:
+		case T_ASSIGN_MUL:
+		case T_ASSIGN_DIV:
+			if(nodes[-1].token == T_SYMBOL && (var = LookupVariable(&nodes[-1])) != -1) {
+				results[var] = 1;
 			}
 			break;
 		}
@@ -341,39 +407,46 @@ static int* FindAssignmentsInBlock(const Node* nodes, const Variable* vars, int 
 }
 
 static int ConstantPropagateBlock(Node* nodes, int *_i, Variable* vars, Value* values, int varCount) {
-	int i=_i?*_i:0, token, var, matched=0, blockdepth=1, blockbegin, blockend, j;
+	int i = _i ? *_i : 0,
+		matched = 0,
+		blockdepth = 1,
+		token, var,	blockbegin, blockend, j;
+
 	assert(nodes->token==T_BEGIN||nodes->token==T_START_STATEMENT);
-	if(nodes[i].token==T_BEGIN) {
-		blockbegin=T_BEGIN;
-		blockend=T_END;
+
+	if (nodes[i].token == T_BEGIN) {
+		blockbegin = T_BEGIN;
+		blockend = T_END;
 	} else {
-		blockbegin=T_START_STATEMENT;
-		blockend=T_END_STATEMENT;
+		blockbegin = T_START_STATEMENT;
+		blockend = T_END_STATEMENT;
 	}
+
 	i++;
-	while(1) {
-		token=nodes[i].token;
-		if(token==blockbegin) blockdepth++;
-		else if(token==blockend) {
-			if(!--blockdepth) break;
-		} else if(token==T_ASSIGN || token==T_ASSIGN_ADD ||token==T_ASSIGN_SUB || token==T_ASSIGN_MUL || token==T_ASSIGN_DIV) {
-			if((var=LookupVariable(&nodes[i-1]))!=-1) {
-				if(nodes[i+1].token==T_START_EXPRESSION && nodes[i+2].token==T_CONSTANT && nodes[i+3].token==T_END_EXPRESSION) {
-					if(token==T_ASSIGN) values[var]=nodes[i+2].value;
-					else if(values[var].type!=-1) {
-						switch(token) {
-						case T_ASSIGN_ADD: token='+'; break;
-						case T_ASSIGN_SUB: token='-'; break;
-						case T_ASSIGN_MUL: token='*'; break;
-						case T_ASSIGN_DIV: token='/'; break;
+	while (1) {
+		token = nodes[i].token;
+		if (token == blockbegin) blockdepth++;
+		else if (token == blockend) {
+			if (!--blockdepth) break;
+		} else if (token == T_ASSIGN || token==T_ASSIGN_ADD ||token==T_ASSIGN_SUB || token==T_ASSIGN_MUL || token==T_ASSIGN_DIV) {
+			if ((var = LookupVariable(&nodes[i-1])) != -1) {
+				if(nodes[i + 1].token == T_START_EXPRESSION && nodes[i + 2].token == T_CONSTANT && nodes[i + 3].token == T_END_EXPRESSION) {
+					if (token == T_ASSIGN)
+						values[var] = nodes[i + 2].value;
+					else if (values[var].type != -1) {
+						switch (token) {
+						case T_ASSIGN_ADD: token = '+'; break;
+						case T_ASSIGN_SUB: token = '-'; break;
+						case T_ASSIGN_MUL: token = '*'; break;
+						case T_ASSIGN_DIV: token = '/'; break;
 						}
-						PerformConstOp(&values[var], &nodes[i+2].value, &values[var], token, &nodes[i]);
+						PerformConstOp(&values[var], &nodes[i + 2].value, &values[var], token, &nodes[i]);
 					}
 				} else {
-					values[var].type=-1;
+					values[var].type = -1;
 				}
 			}
-		} else if(token==T_IF) {
+		} else if(token == T_IF) {
 			int *aif=0, *aelse=0;
 			Value* backup=(Value*)malloc(varCount*sizeof(Value));
 			memcpy(backup, values, varCount*sizeof(Value));
@@ -396,7 +469,7 @@ static int ConstantPropagateBlock(Node* nodes, int *_i, Variable* vars, Value* v
 			free(aif);
 			if(aelse) free(aelse);
 			free(backup);
-		} else if(token==T_WHILE) {
+		} else if (token == T_WHILE) {
 			//TODO: Check here if the while loop expression is a single symbol; if it's 0 at this point we can eat the loop, even if the loop modifies it
 			Node* nodes2=&nodes[i];
 			int* invalidate;
@@ -705,26 +778,27 @@ static int Combine(NodeList* _nodes) {
 
 static void OptimizeProcedure(Procedure* proc) {
 	int found;
-	int hasVars=proc->variables.variables!=0;
+	int hasVars = proc->variables.variables != 0;
 	Value *values;
 	VarUsage *usage;
 
-	if(hasVars) {
-		values = (Value*)malloc(sizeof(Value)*proc->variables.numVariables);
-		usage=(VarUsage*)malloc(proc->variables.numVariables*sizeof(VarUsage));
+	if (hasVars) {
+		values = (Value*)malloc(sizeof(Value) * proc->variables.numVariables);
+		usage = (VarUsage*)malloc(proc->variables.numVariables * sizeof(VarUsage));
 	}
 	do {
-		found=0;
-		found=ConstantFolding(&proc->nodes);
-		if(hasVars) {
-			if (optimize>=3) { // constant propagation is known to break code
-				found|=ConstantPropagation(&proc->nodes, proc->variables.variables, values,  proc->variables.numVariables, proc->numArgs);
+		found = 0;
+		found = ConstantFolding(&proc->nodes);
+		if (hasVars) {
+			if (optimize >= 3) { // constant propagation is known to break code
+				found |= ConstantPropagation(&proc->nodes, proc->variables.variables, values,  proc->variables.numVariables, proc->numArgs);
 			}
-			found|=DeadStoreRemoval(&proc->nodes, &proc->variables, usage);
+			found |= DeadStoreRemoval(&proc->nodes, &proc->variables, usage);
 		}
-		found|=DeadCodeRemoval(&proc->nodes);
-		found|=Combine(&proc->nodes);
-	} while(found);
+		found |= DeadCodeRemoval(&proc->nodes);
+		found |= Combine(&proc->nodes);
+	} while (found);
+	while (ConstantFoldingPassTwo(&proc->nodes)); /* Additional passes optimization */
 	if(hasVars) {
 		DeadVariableRemoval(&proc->nodes, &proc->variables, proc->numArgs); //use this twice so that VariableReuse has no completely dead variables to worry about
 		if (optimize>=3) { // variable reuse is known to break code
@@ -764,8 +838,8 @@ int IsProtectedProc(const char* c) {
 	Protect("combat_is_starting_p_proc");
 	Protect("combat_is_over_p_proc");
 
-	Protect("node998");
-	Protect("node999");
+	//Protect("node998");
+	//Protect("node999");
 	return 0;
 }
 static int __once = 0;
@@ -858,8 +932,8 @@ static void DecendUnusedProcedures(Program *prog) {
 static void UpdateProcedureReferences(Procedure* procs, int count) {
 	int i,j,matched=1;
 	Node* node;
-	for(i=1;i<count;i++) {
-		if(IsProtectedProc(currprogram->namelist + procs[i].name) || procs[i].type&(P_TIMED|P_CONDITIONAL|P_EXPORT|P_CRITICAL)) procs[i].uses=1;
+	for(i = 1;i < count; i++) {
+		if(IsProtectedProc(currprogram->namelist + procs[i].name) || procs[i].type & (P_TIMED | P_CONDITIONAL | P_EXPORT)) procs[i].uses=1; /* | P_CRITICAL */
 		//else if(procs[i].type&P_IMPORT) procs[i].uses=2;
 		else procs[i].uses=0;
 	}

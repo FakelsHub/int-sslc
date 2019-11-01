@@ -1,0 +1,57 @@
+/*******************************************************************************
+        Name:
+        Location:
+        Description:
+
+            Created: sFall Script Editor
+            Updated:
+*******************************************************************************/
+
+procedure start;
+procedure node999;
+
+variable test, test1 := 5;
+
+procedure start begin
+   test := test * 10 + 15 + 5 - 2 + test1 / 2;
+   test := test * 10 + 15 + 5 - 2 - 30 / 4 - 22;
+   test := test * 10 + 15 + 5 - 2 - 30 / 4 * test1 - 22;
+   test := test * 10 + 15 + 5 - 2 - 30 / 4 * test1 / 22 + test;
+   test := test * 10 - 15 + 5 + 2 - 30 * 4 / test1 * 22;
+
+                               //T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT 42 T_CONSTANT 43 T_CONSTANT 43 T_END_EXPRESSION
+   test := test * 10 + 15 + 5; //T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT 42 T_CONSTANT 43 T_CONSTANT 43 T_END_EXPRESSION
+   test := test * 10 + 15 + 5 - 2;
+
+   test := test + 10 + 15;   //T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT (43) T_CONSTANT 43 T_END_EXPRESSION
+   test := test + (10 + 15); //T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT T_CONSTANT 43 | 43 T_END_EXPRESSION
+
+   test := test + 10 + 20 / 2 - 15 * 3; // -25         T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT (43) T_CONSTANT T_CONSTANT 47 43 T_CONSTANT T_CONSTANT 42 45 T_END_EXPRESSION
+   test := test + (10 + (20 / 2) - (15 * 3)); // -25 T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT T_CONSTANT T_CONSTANT 47 43 T_CONSTANT T_CONSTANT 42 45 43 T_END_EXPRESSION
+
+   test := test + 10 + 10; // 20
+   test := test + 10 + 20 + 2 - 15 + 3; // 20 | T_SYMBOL T_ASSIGN T_START_EXPRESSION T_SYMBOL T_CONSTANT 43 T_CONSTANT 43 T_CONSTANT 43 T_CONSTANT 45 T_CONSTANT 43 T_END_EXPRESSION
+   test := 10 + 20 + 2 - 15 + 3; // 20        | T_SYMBOL T_ASSIGN T_START_EXPRESSION T_CONSTANT T_CONSTANT 43 T_CONSTANT 43 T_CONSTANT 45 T_CONSTANT 43 T_CONSTANT T_END_EXPRESSION
+                                                                //T_START_EXPRESSION T_SYMBOL T_CONSTANT T_CONSTANT 43 T_CONSTANT 43 T_CONSTANT 45 T_CONSTANT 43 43 T_END_EXPRESSION
+   test := 10 + 15 / 2 + test1 - 5;
+
+   test := test + 10 + 15 / 2 + test1 - 5 * 2;
+   test := test + 10 + (15 / 2) + test1 - 5 * 2;
+
+   test := test * 10 + 15 / 2 + test1 - 5 * 2;
+
+
+   test := test + 10 * (15 / 2) + test1 - 5 * 2;
+   test := 10 * 15 / 2 + (test1 - 5) * 2; // T_SYMBOL T_ASSIGN T_START_EXPRESSION T_CONSTANT T_CONSTANT 42 T_CONSTANT 47 T_SYMBOL T_CONSTANT 45   T_END_EXPRESSION
+   test := test + 10 * 15 / 2 + (test1 - 5) * 2;
+
+   test1 += 5;
+end
+
+critical procedure unnamed_proc() begin
+
+end
+
+procedure node999 begin
+
+end
