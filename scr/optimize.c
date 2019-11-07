@@ -305,7 +305,7 @@ static int isValidMathOp(int op) {
 // optimizes remaining not optimized mathematical operations (except for logical operations) | added: fakels
 static int ConstantFoldingPassTwo(NodeList* _nodes) {
 	int i, token, _token, isStartExp = 0;
-	int nResult = 0, tokenOp = 0, isNotEquals = 0, matched = 0;
+	int nResult = 0, tokenOp = 0, isNotEquals = 0, matched = 0, nonConstant = 0;
 
 	Node* nodes = _nodes->nodes;
 	for (i = 2; i < _nodes->numNodes; i++)
@@ -316,13 +316,16 @@ static int ConstantFoldingPassTwo(NodeList* _nodes) {
 			continue;
 		} else if (token == T_END_EXPRESSION) {
 			isStartExp = 0;
+			nonConstant = 0;
 			continue;
 		}
 		if (token == T_SYMBOL) {
 			tokenOp = 0;
+			// remember position for last non-const symbol
+			if (nodes[i + 2].token != '+') nonConstant = i + 1; // skip for 'T_SYMBOL + a'
 			continue;
 		}
-		if (token == T_CONSTANT && nodes[i].value.type != V_STRING) {
+		if (token == T_CONSTANT && nodes[i].value.type != V_STRING && (nonConstant == 0 || nonConstant < i)) {
 			_token = nodes[i + 1].token;
 			if (!isValidMathOp(_token)) {
 				tokenOp = 0;
@@ -334,11 +337,8 @@ static int ConstantFoldingPassTwo(NodeList* _nodes) {
 				continue;
 			}
 			if (tokenOp != _token) {
-				if ((tokenOp == '+' && _token != '-') || (tokenOp == '-' && _token != '+')) {
-					isNotEquals = 1;
-				} else if ((tokenOp == '*' && _token != '/') || (tokenOp == '/' && _token != '*')) {
-					isNotEquals = 1;
-				}
+				isNotEquals = 1;
+				if (tokenOp == '+' && _token == '-') isNotEquals = 0; // exclusion for 'a + b - c'
 			}
 			if (!isNotEquals) {
 				parseMessageAtNode(&nodes[i + 1], "Pass two: Folding constant mathematics expression");
