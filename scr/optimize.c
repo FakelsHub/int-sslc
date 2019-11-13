@@ -798,7 +798,9 @@ static void OptimizeProcedure(Procedure* proc) {
 		found |= DeadCodeRemoval(&proc->nodes);
 		found |= Combine(&proc->nodes);
 	} while (found);
+#ifdef _DEBUG
 	while (ConstantFoldingPassTwo(&proc->nodes)); /* Additional passes optimization */
+#endif
 	if(hasVars) {
 		DeadVariableRemoval(&proc->nodes, &proc->variables, proc->numArgs); //use this twice so that VariableReuse has no completely dead variables to worry about
 		if (optimize>=3) { // variable reuse is known to break code
