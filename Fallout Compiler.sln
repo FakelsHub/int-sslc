@@ -1,8 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sslc", "scr\sslc.vcxproj", "{0EC114D1-14AD-447E-88EF-ED37F6F258F0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sslc", "sslc\sslc.vcxproj", "{0EC114D1-14AD-447E-88EF-ED37F6F258F0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "int2ssl", "int_scr\int2ssl.vcxproj", "{111A0D20-3404-449D-A984-73C3D9A001E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "int2ssl", "int2ssl\int2ssl.vcxproj", "{111A0D20-3404-449D-A984-73C3D9A001E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
