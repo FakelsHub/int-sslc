@@ -295,12 +295,20 @@ int writeNode(NodeList *n, int i, FILE *f) {
 		i = writeExpression(n, i, f); // expr if false
 		patchOffset(outAdr + OPCODE_SIZE, outputTell(f), f);
 		break;
-			   }
+	}
+	case T_AND_ALSO:
+		n->nodes[i].token = T_AND;
+		goto shCircuit;
+	case T_OR_ELSE:
+		n->nodes[i].token = T_OR;
+		goto shCircuit;
 	case T_AND:
-	case T_OR: {
+	case T_OR:
+	{
 		// this is encountered after left argument expression was written, so we have it's result on stack top
 		if (shortCircuit) { // phobos2077 - short circuit evaluation of logical operators
 			int skipAddr;
+shCircuit:
 			writeOp(O_DUP, f);   // duplicate expr result, if it is 0, this value will be used as result of AND
 			skipAddr = outputTell(f);
 			writeInt(0, f);      // address for O_IF
@@ -318,7 +326,7 @@ int writeNode(NodeList *n, int i, FILE *f) {
 			writeOp((tok == T_AND) ? O_AND : O_OR, f);
 		}
 		break;
-			}
+	}
 	default: {
 		switch(n->nodes[i].token) {
 		case T_BWNOT: writeOp(O_BWNOT, f); i++; break;
@@ -345,7 +353,7 @@ int writeNode(NodeList *n, int i, FILE *f) {
 		default: i = writeLibExpression(n, i, f); break;
 		}
 		break;
-			 }
+	}
 	}
 	return i;
 }
