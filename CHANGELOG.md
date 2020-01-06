@@ -1,9 +1,11 @@
 int2ssl
 =====
 #### 8.4.5
-- Added logical operators `AndAlso`, `OrElse` 
+- Added new logical operators `AndAlso`, `OrElse`
 
 #### 8.4.4 under development
+- Added opcode `reg_anim_callback sfall` for sfall 4.2.2
+- Added opcode `register_hook_proc_spec` for sfall 4.2.0
 
 #### 8.4.3 (2018-01-03)
 - AppVeyor configuration (alexeevdv)
