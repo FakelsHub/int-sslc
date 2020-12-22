@@ -201,7 +201,7 @@
       </ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>move "$(TargetPath)" "$(SolutionDir)..\Build\"</Command>
+      <Command>move "$(TargetPath)" "$(SolutionDir)\Build\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win2K|Win32'">
@@ -268,7 +268,7 @@
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>move "$(TargetPath)" "$(SolutionDir)..\Build\"</Command>
+      <Command>move "$(TargetPath)" "$(SolutionDir)\Build\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (dll)|Win32'">
